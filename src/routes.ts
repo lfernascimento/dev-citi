@@ -17,6 +17,9 @@ routes.delete("/users/:id", UserController.deleteUser);
 
 // CRUD de plantas
 routes.post("/plantas", PlantaController.createPlanta);
+routes.get("/plantas", PlantaController.readAllPlantas);
+// Rotas fixas vêm antes de /plantas/:id, senão "esgotadas" seria tratado como um id
+routes.get("/plantas/esgotadas", PlantaController.readPlantasEsgotadas);
 routes.get("/plantas/:id", PlantaController.readPlantaById);
 routes.patch("/plantas/:id", PlantaController.updatePlanta);
 routes.delete("/plantas/:id", PlantaController.deletePlanta);

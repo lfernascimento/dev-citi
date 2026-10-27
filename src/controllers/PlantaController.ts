@@ -120,6 +120,65 @@ export const createPlanta = async (req: Request, res: Response) => {
   }
 };
 
+export const readAllPlantas = async (req: Request, res: Response) => {
+  try {
+    // Filtros chegam em req.query e são sempre texto (ou lista, se repetidos na URL)
+    const { luminosidade, petFriendly, nome, ordem } = req.query;
+
+    const filtros: PlantaRepository.FiltrosPlanta = {};
+
+    if (luminosidade !== undefined) {
+      if (typeof luminosidade !== "string" || !Object.values(Luminosidade).includes(luminosidade as Luminosidade)) {
+        return res.status(400).json({
+          message: `luminosidade deve ser um destes valores: ${Object.values(Luminosidade).join(", ")}.`,
+        });
+      }
+      filtros.luminosidade = luminosidade as Luminosidade;
+    }
+
+    // Um filtro não enviado continua undefined: nunca vira false
+    if (petFriendly !== undefined) {
+      if (petFriendly !== "true" && petFriendly !== "false") {
+        return res.status(400).json({ message: "petFriendly deve ser true ou false." });
+      }
+      filtros.petFriendly = petFriendly === "true";
+    }
+
+    if (nome !== undefined) {
+      if (typeof nome !== "string") {
+        return res.status(400).json({ message: "nome deve ser um texto." });
+      }
+      filtros.nome = nome.trim();
+    }
+
+    if (ordem !== undefined) {
+      if (ordem !== "preco" && ordem !== "nome") {
+        return res.status(400).json({ message: "ordem deve ser preco ou nome." });
+      }
+      filtros.ordem = ordem;
+    }
+
+    // Filtro válido sem resultado é 200 com [], nunca 404
+    const plantas = await PlantaRepository.findAllPlantas(filtros);
+
+    return res.status(200).json(plantas);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao buscar plantas." });
+  }
+};
+
+export const readPlantasEsgotadas = async (req: Request, res: Response) => {
+  try {
+    const plantas = await PlantaRepository.findPlantasEsgotadas();
+
+    return res.status(200).json(plantas);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao buscar plantas esgotadas." });
+  }
+};
+
 export const readPlantaById = async (req: Request, res: Response) => {
   try {
     const id = lerId(req.params.id);
