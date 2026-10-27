@@ -231,6 +231,66 @@ export const updatePlanta = async (req: Request, res: Response) => {
   }
 };
 
+export const venderPlanta = async (req: Request, res: Response) => {
+  try {
+    const id = lerId(req.params.id);
+
+    if (id === null) {
+      return res.status(400).json({ message: "O id deve ser um número inteiro maior que zero." });
+    }
+
+    const quantidade = req.body?.quantidade;
+
+    if (!ehInteiroEntre(quantidade, 1)) {
+      return res.status(400).json({ message: "quantidade deve ser um número inteiro maior que zero." });
+    }
+
+    const planta = await PlantaRepository.findPlantaById(id);
+
+    if (!planta) {
+      return res.status(404).json({ message: "Planta não encontrada." });
+    }
+
+    if (planta.estoque < quantidade) {
+      return res.status(400).json({
+        message: `Estoque insuficiente: temos só ${planta.estoque} vasos e o pedido é de ${quantidade}.`,
+      });
+    }
+
+    // A conferência acima dá a mensagem clara, mas outra venda pode acontecer entre ela e a
+    // gravação. Por isso o repository confere o estoque de novo na própria instrução de update.
+    const { count } = await PlantaRepository.decrementarEstoque(id, quantidade);
+
+    if (count === 0) {
+      return res.status(400).json({
+        message: "Estoque insuficiente: outra venda levou os vasos antes desta.",
+      });
+    }
+
+    const plantaAtualizada = await PlantaRepository.findPlantaById(id);
+
+    return res.status(200).json(plantaAtualizada);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao registrar venda." });
+  }
+};
+
+export const readValorTotalDoEstoque = async (req: Request, res: Response) => {
+  try {
+    const plantas = await PlantaRepository.findPrecoEEstoqueDeTodas();
+
+    // Inteiros em centavos: a conta é sempre exata
+    const valorTotalEmCentavos = plantas.reduce((total, planta) => total + planta.preco * planta.estoque, 0);
+    const totalDeVasos = plantas.reduce((total, planta) => total + planta.estoque, 0);
+
+    return res.status(200).json({ valorTotalEmCentavos, totalDeVasos });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao calcular o valor do estoque." });
+  }
+};
+
 export const deletePlanta = async (req: Request, res: Response) => {
   try {
     const id = lerId(req.params.id);
