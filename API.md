@@ -142,6 +142,7 @@ Toda resposta de erro tem o formato `{ "message": "..." }`.
 | Status | Quando acontece |
 |---|---|
 | `400` | `id` que não é inteiro maior que zero (`abc`, `0`, `-1`, `1.5`) |
+| `400` | Corpo da requisição que não é um JSON válido (por exemplo, `"preco": ,`) |
 | `400` | Campo obrigatório ausente no cadastro |
 | `400` | Valor inválido no cadastro, na edição ou na venda: texto vazio, número que não é inteiro, `preco` ≤ 0, `estoque` negativo, `regaACadaDias` < 1, `luminosidade` fora do enum, `petFriendly` que não é booleano, número acima de 2147483647, tipo errado (`"preco": "8990"`) |
 | `400` | Filtro inválido: `luminosidade` fora do enum, `petFriendly` diferente de `true`/`false`, `ordem` diferente de `preco`/`nome`, parâmetro repetido na URL |
